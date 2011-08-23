@@ -7,7 +7,6 @@ import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.text.format.DateFormat;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -24,31 +23,27 @@ import android.widget.TextView;
  *
  */
 public class ScrollingCalendarView extends GridView {
-	public static final Calendar EPOCH_START;
+	public Calendar EPOCH_START;
 	private static final int END_OF_DAYS = 1000000;
-
-	static {
-		EPOCH_START = Calendar.getInstance();
-		EPOCH_START.set(2000, 0, 3, 0, 0, 0);
-		EPOCH_START.set(Calendar.MILLISECOND, 0);
-	}
 
 	private int mCellsPerRow;
 	
 	private int mCellResource;
 	
 	private Drawable mDrawableNormal;
-	private Drawable mDrawableToday;
-	private Drawable mDrawableWeekend;
+//	private Drawable mDrawableToday;
+//	private Drawable mDrawableWeekend;
 	private Drawable mDrawablePast;
-	private Drawable mDrawableNextMonth;
+//	private Drawable mDrawableNextMonth;
 	private Drawable mDrawableSelectedStart;
 	private Drawable mDrawableSelectedRange;
 	
 	private int mColorTextNormal;
 	private int mColorTextPast;
-	private int mColorTextThisMonth;
-	private int mColorTextNextMonth;
+//	private int mColorTextThisMonth;
+//	private int mColorTextNextMonth;
+	private int mColorTextEvenMonth;
+	private int mColorTextOddMonth;
 
 	private Calendar mToday;
 	private Calendar mSelectionStart;
@@ -116,17 +111,14 @@ public class ScrollingCalendarView extends GridView {
 	        
             Calendar cal = (Calendar) getItem(position);
 	        
-            holder.tvDay.setText(DateFormat.format("dd", cal));
+            holder.tvDay.setText(DateFormat.format("d", cal));
 	        holder.tvMonth.setText(DateFormat.format("MMM", cal));
 
-	        if(cal.get(Calendar.MONTH) == 6 && cal.get(Calendar.DAY_OF_MONTH) == 15)
-	        	Log.d("xxx", "15 июля!");
-	        
 	        Drawable drawable = null;
         	int colorDay = mColorTextNormal;
-        	int colorMonth = mColorTextThisMonth;
-
-	        int day = cal.get(Calendar.DAY_OF_WEEK);
+//        	int colorMonth = mColorTextThisMonth;
+          	int colorMonth = cal.get(Calendar.MONTH) % 2 == 1 ? mColorTextOddMonth : mColorTextEvenMonth;
+//	        int day = cal.get(Calendar.DAY_OF_WEEK);
 
 	        if(mSelectionStart != null && mSelectionEnd == null && mSelectionStart.equals(cal))
 	        	drawable = mDrawableSelectedStart;
@@ -134,21 +126,21 @@ public class ScrollingCalendarView extends GridView {
 	        		(mSelectionStart.before(cal) || mSelectionStart.equals(cal)) && 
 	        		(mSelectionEnd.after(cal) || mSelectionEnd.equals(cal)))
 	        	drawable = mDrawableSelectedRange;
-	        else if(day == Calendar.SATURDAY || day == Calendar.SUNDAY)
-	        	drawable = mDrawableWeekend;
-	        else if(cal.get(Calendar.YEAR) > mToday.get(Calendar.YEAR) ||
-	        		(cal.get(Calendar.YEAR) == mToday.get(Calendar.YEAR) && cal.get(Calendar.MONTH) > mToday.get(Calendar.MONTH))) {
-	        	drawable = mDrawableNextMonth;
-	        	colorMonth = mColorTextNextMonth;
-	        }
+//	        else if(day == Calendar.SATURDAY || day == Calendar.SUNDAY)
+//	        	drawable = mDrawableWeekend;
+//	        else if(cal.get(Calendar.YEAR) > mToday.get(Calendar.YEAR) ||
+//	        		(cal.get(Calendar.YEAR) == mToday.get(Calendar.YEAR) && cal.get(Calendar.MONTH) > mToday.get(Calendar.MONTH))) {
+//	        	drawable = mDrawableNextMonth;
+//	        	colorMonth = mColorTextNextMonth;
+//	        }
 	        else if(cal.before(mToday)) {
 	        	drawable = mDrawablePast;
 	        	colorDay = mColorTextPast;
 	        	colorMonth = mColorTextPast;
 	        }
-	        else if(cal.equals(mToday)) {
-	        	drawable = mDrawableToday;
-	        }
+//	        else if(cal.equals(mToday)) {
+//	        	drawable = mDrawableToday;
+//	        }
 	        else {
 	        	drawable = mDrawableNormal;
 	        }
@@ -214,6 +206,10 @@ public class ScrollingCalendarView extends GridView {
 		setStretchMode(STRETCH_COLUMN_WIDTH);
 		setSelector(new BitmapDrawable());
 		
+		EPOCH_START = Calendar.getInstance();
+		EPOCH_START.set(2000, 0, 3, 0, 0, 0);
+		EPOCH_START.set(Calendar.MILLISECOND, 0);
+
 		mToday = Calendar.getInstance();
 	}
 	
@@ -249,25 +245,27 @@ public class ScrollingCalendarView extends GridView {
 		mCellResource = cellLayoutId;
 	}
 	
-	public void setCellBackgroundDrawables(Drawable[] arr) {
-		int len = arr.length;
+	public void setCellBackgroundDrawables(Drawable normal, Drawable past, Drawable selectedStart, Drawable selectedRange) {
+//		int len = arr.length;
 		
-		mDrawableNormal = arr[0];
-		mDrawableToday = len > 1 ? arr[1] : arr[0];
-		mDrawableWeekend = len > 2 ? arr[2] : arr[0];
-		mDrawablePast = len > 3 ? arr[3] : arr[0];
-		mDrawableNextMonth = len > 4 ? arr[4] : arr[0];
-		mDrawableSelectedStart = len > 5 ? arr[5] : arr[0];
-		mDrawableSelectedRange = len > 6 ? arr[6] : arr[0];
+		mDrawableNormal = normal;
+//		mDrawableToday = len > 1 ? arr[1] : arr[0];
+//		mDrawableWeekend = len > 2 ? arr[2] : arr[0];
+		mDrawablePast = past;
+//		mDrawableNextMonth = len > 4 ? arr[4] : arr[0];
+		mDrawableSelectedStart = selectedStart;
+		mDrawableSelectedRange = selectedRange == null ? selectedStart : selectedRange;
 	}
 
-	public void setCellTextColors(int[] arr) {
-		int len = arr.length;
+	public void setCellTextColors(int textNormal, int textPast, int textEvenMonth, int textOddMonth) {
+//		int len = arr.length;
 		
-		mColorTextNormal = arr[0];
-		mColorTextPast = len > 1 ? arr[1] : arr[0];
-		mColorTextThisMonth = len > 2 ? arr[2] : arr[0];
-		mColorTextNextMonth = len > 3 ? arr[3] : arr[0];
+		mColorTextNormal = textNormal;
+		mColorTextPast = textPast;
+//		mColorTextThisMonth = len > 2 ? arr[2] : arr[0];
+//		mColorTextNextMonth = len > 3 ? arr[3] : arr[0];
+		mColorTextEvenMonth = textEvenMonth;
+		mColorTextOddMonth = textOddMonth;
 	}
 	
 	public void setOnDateSelectionListener(OnDateSelectionListener l) {
@@ -295,9 +293,13 @@ public class ScrollingCalendarView extends GridView {
 	}
 	
 	public void setSelectionStart(Calendar cal) {
-		mSelectionStart = (Calendar) cal.clone();
-		truncDate(mSelectionStart);
-		
+		if(cal == null)
+			mSelectionStart = null;
+		else {
+			mSelectionStart = (Calendar) cal.clone();
+			truncDate(mSelectionStart);
+		}
+			
 		mSelectionEnd = null;
 	}
 	
