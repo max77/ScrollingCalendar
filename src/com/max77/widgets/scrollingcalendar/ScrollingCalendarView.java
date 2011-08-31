@@ -11,6 +11,7 @@ import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AbsListView;
 import android.widget.AdapterView;
 import android.widget.BaseAdapter;
 import android.widget.GridView;
@@ -50,7 +51,9 @@ public class ScrollingCalendarView extends GridView {
 	private Calendar mSelectionEnd;
 	
 	private OnDateSelectionListener mListener = null;
-
+	
+	private boolean mSnapMode = false;
+	
 	/*
 	 * 
 	 * 
@@ -211,8 +214,41 @@ public class ScrollingCalendarView extends GridView {
 		EPOCH_START.set(Calendar.MILLISECOND, 0);
 
 		mToday = Calendar.getInstance();
+
+		setOnScrollListener(new OnScrollListener() {
+			boolean isScrolling = false;
+			
+			@Override
+			public void onScrollStateChanged(AbsListView view, int scrollState) {
+				if(!mSnapMode)
+					return;
+				
+				switch (scrollState) {
+				case OnScrollListener.SCROLL_STATE_IDLE:
+					if (isScrolling) {
+						View item = getChildAt(0);
+						
+						if (Math.abs(item.getTop()) >= Math.abs(item.getBottom())) {
+							setSelection(view.getFirstVisiblePosition() + mCellsPerRow);
+						} else {
+							setSelection(view.getFirstVisiblePosition());
+						}
+					}
+					
+					isScrolling = false;
+					break;
+				case OnScrollListener.SCROLL_STATE_TOUCH_SCROLL:
+				case OnScrollListener.SCROLL_STATE_FLING:
+					isScrolling = true;
+					break;
+				}
+			}
+			
+			@Override
+			public void onScroll(AbsListView view, int firstVisibleItem, int visibleItemCount, int totalItemCount) {
+			}
+		});
 	}
-	
 	
 	public ScrollingCalendarView(Context context) {
 		super(context);
@@ -318,5 +354,9 @@ public class ScrollingCalendarView extends GridView {
 	
 	public void clearSelection() {
 		mSelectionStart = mSelectionEnd = null;
+	}
+	
+	public void setSnapMode(boolean snapMode) {
+		mSnapMode = snapMode;
 	}
 }
